@@ -1,7 +1,9 @@
 package com.exam.omr.service;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,22 @@ public class JournalEntryService {
 	public  List<JournalEntity> getAll()
 	{
 		return journalEntryRepo.findAll();
+	}
+	
+	public Optional<JournalEntity> getId(ObjectId id)
+	{
+		return journalEntryRepo.findById(id);
+	}
+	
+	public void deleteId(ObjectId id)
+	{
+		journalEntryRepo.deleteById(id);
+		
+	}
+	
+	public void deleteAll()
+	{
+		journalEntryRepo.deleteAll();
 	}
 
 }

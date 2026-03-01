@@ -1,7 +1,9 @@
 package com.exam.omr.entity;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,23 +11,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class JournalEntity {
 	
 	@Id
-	private String id;
+	private ObjectId id;
 	private String name;
 	private String topic;
-	private Date date;
+	private LocalDateTime date;
 	
-	
-	
-	public Date getDate() {
-		return date;
-	}
-	public void setDate(Date date) {
-		this.date = date;
-	}
-	public String getId() {
+	public ObjectId getId() {
 		return id;
 	}
-	public void setId(String id) {
+	public void setId(ObjectId id) {
 		this.id = id;
 	}
 	public String getName() {
@@ -40,6 +34,16 @@ public class JournalEntity {
 	public void setTopic(String topic) {
 		this.topic = topic;
 	}
+	public LocalDateTime getDate() {
+		return date;
+	}
+	public void setDate(LocalDateTime date) {
+		this.date = date;
+	}
+	
+	
+	
+	
 	
 	
 	
