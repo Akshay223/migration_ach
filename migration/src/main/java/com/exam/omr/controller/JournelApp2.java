@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,49 +16,51 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.exam.omr.entity.JournalEntity;
+import com.exam.omr.service.JournalEntryService;
 
 @RestController
-@RequestMapping("/journal")
-public class JournelApp {
+@RequestMapping("/journal2")
+public class JournelApp2 {
 	
-	private Map<Long, JournalEntity> jounal = new HashMap<>();
+	@Autowired
+	private JournalEntryService entryService;
 	
 	@GetMapping
 	public List<JournalEntity> getAll()
 	{
-		return new ArrayList<>(jounal.values());
+		return entryService.getAll();
 				
 	}
 	
-	@GetMapping("id/{id}")
-	public JournalEntity getId(@PathVariable Long id)
+	@PostMapping
+	public String addJounal(@RequestBody JournalEntity jp)
 	{
-		return jounal.get(id);
-				
+		entryService.saveEntry(jp);
+		return "journal added";
 	}
 	
-//	@PostMapping
-//	public String addJounal(@RequestBody JournalEntity jp)
+//	@GetMapping("id/{id}")
+//	public JournalEntity getId(@PathVariable Long id)
 //	{
-//		jounal.put(jp.getId(), jp);
-//		return "added";
+//		return null;
+//				
 //	}
-	
-	@DeleteMapping("id/{id}")
-	public String deleteId(@PathVariable Long id)
-	{
-		jounal.remove(id);
-		return "deleted";
-				
-	}
-	
-	@PutMapping("id/{id}")
-	public String updateId(@RequestBody JournalEntity jb , @PathVariable Long id)
-	{
-		jounal.put(id, jb);
-		return "updated";
-				
-	}
+//	
+//	
+//	
+//	@DeleteMapping("id/{id}")
+//	public String deleteId(@PathVariable Long id)
+//	{
+//		return null;
+//				
+//	}
+//	
+//	@PutMapping("id/{id}")
+//	public String updateId(@RequestBody JournalEntity jb , @PathVariable Long id)
+//	{
+//		return null;
+//				
+//	}
 	
 	
 
