@@ -7,7 +7,12 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
 @Document(collection = "journel_entries")
+//@Data
 public class JournalEntity {
 	
 	@Id
@@ -15,7 +20,6 @@ public class JournalEntity {
 	private String name;
 	private String topic;
 	private LocalDateTime date;
-	
 	public ObjectId getId() {
 		return id;
 	}
@@ -40,12 +44,14 @@ public class JournalEntity {
 	public void setDate(LocalDateTime date) {
 		this.date = date;
 	}
+	public JournalEntity(ObjectId id, String name, String topic, LocalDateTime date) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.topic = topic;
+		this.date = date;
+	}
 	
 	
 	
-	
-	
-	
-	
-
 }

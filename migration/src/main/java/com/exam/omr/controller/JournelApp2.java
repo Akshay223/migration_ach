@@ -28,6 +28,8 @@ public class JournelApp2 {
 	@Autowired
 	private JournalEntryService entryService;
 	
+	 
+	
 	@GetMapping
 	public List<JournalEntity> getAll()
 	{
