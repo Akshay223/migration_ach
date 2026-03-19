@@ -1,0 +1,752 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String              @id @default(cuid())
+  name                String?
+  email               String              @unique
+  firebaseUid         String?             @unique
+  emailVerified       DateTime?
+  image               String?
+  password            String?
+  role                UserRole?
+  activeRole          UserRole?
+  phoneNumber         String?
+  onboarded           Boolean             @default(false)
+  latitude            Float?
+  longitude           Float?
+  lastActive          DateTime            @default(now())
+  city                String?
+  state               String?
+  country             String?
+  pincode             String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  referredById        String?
+  accounts            Account[]
+  auditLogs           AuditLog[]
+  sentConnections     ConnectionRequest[] @relation("SentConnections")
+  receivedConnections ConnectionRequest[] @relation("ReceivedConnections")
+  conversations       Conversation[]
+  goals               FounderGoal[]
+  freelancerProfile   FreelancerProfile?
+  helpRequests        HelpRequest[]
+  helpResponses       HelpResponse[]
+  inquiries           Inquiry[]           @relation("StartupInquiries")
+  investorProfile     InvestorProfile?
+  invites             Invite[]            @relation("InvitesSent")
+  kycDocuments        KycDocument[]
+  messagesSent        Message[]
+  needs               NeedHelp[]
+  notifications       Notification[]
+  properties          Property[]          @relation("OwnerProperties")
+  providerProfile     ProviderProfile?
+  savedLocations      SavedLocation[]
+  sessions            Session[]
+  spaceBookings       SpaceBooking[]
+  startupProfile      StartupProfile?
+  supportRequests     SupportRequest[]
+  referredBy          User?               @relation("UserReferrals", fields: [referredById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  referrals           User[]              @relation("UserReferrals")
+  wallets             Wallet?
+
+  @@index([lastActive])
+}
+
+model SavedLocation {
+  id          String   @id @default(cuid())
+  userId      String
+  latitude    Float
+  longitude   Float
+  address     String?
+  industry    String?
+  budget      String?
+  score       Int?
+  competition String?
+  demand      String?
+  risk        String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ConnectionRequest {
+  id           String           @id @default(cuid())
+  fromUserId   String
+  toUserId     String
+  status       ConnectionStatus @default(PENDING)
+  senderName   String
+  senderRole   String
+  purpose      String
+  message      String           @db.VarChar(300)
+  connectionId String?          @unique
+  whatsappLink String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  source       String           @default("DIRECT")
+  fromUser     User             @relation("SentConnections", fields: [fromUserId], references: [id])
+  toUser       User             @relation("ReceivedConnections", fields: [toUserId], references: [id])
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId, status])
+}
+
+model NeedHelp {
+  id          String    @id @default(cuid())
+  founderId   String
+  category    String
+  urgency     String
+  description String
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  founder     User      @relation(fields: [founderId], references: [id])
+
+  @@index([founderId])
+  @@index([category])
+}
+
+model FounderGoal {
+  id        String        @id @default(cuid())
+  founderId String
+  title     String
+  status    String        @default("ACTIVE")
+  createdAt DateTime      @default(now())
+  founder   User          @relation(fields: [founderId], references: [id])
+  todos     FounderTodo[]
+}
+
+model FounderTodo {
+  id        String      @id @default(cuid())
+  goalId    String
+  title     String
+  completed Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  goal      FounderGoal @relation(fields: [goalId], references: [id])
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model KycDocument {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  url       String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FreelancerProfile {
+  id                  String                @id @default(cuid())
+  userId              String                @unique
+  headline            String?
+  bio                 String?
+  isActive            Boolean               @default(false)
+  skills              String[]
+  experience          ExperienceLevel?
+  availability        AvailabilityType?
+  workType            WorkType?
+  portfolio           String?
+  github              String?
+  linkedin            String?
+  hourlyRate          Decimal?
+  latitude            Float?
+  longitude           Float?
+  city                String?
+  state               String?
+  country             String?
+  pincode             String?
+  address             String?
+  bids                Bid[]
+  contracts           Contract[]
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MatchRecommendation MatchRecommendation[]
+  projects            Project[]
+  proposals           Proposal[]
+
+  @@index([latitude, longitude])
+}
+
+model Project {
+  id          String            @id @default(cuid())
+  ownerId     String
+  title       String
+  description String
+  budget      Decimal
+  status      String            @default("OPEN")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  bids        Bid[]
+  owner       FreelancerProfile @relation(fields: [ownerId], references: [id])
+}
+
+model Bid {
+  id           String            @id @default(cuid())
+  projectId    String
+  freelancerId String
+  amount       Decimal
+  proposal     String
+  status       String            @default("PENDING")
+  createdAt    DateTime          @default(now())
+  freelancer   FreelancerProfile @relation(fields: [freelancerId], references: [id])
+  project      Project           @relation(fields: [projectId], references: [id])
+}
+
+model Contract {
+  id           String            @id @default(cuid())
+  taskId       String
+  startupId    String
+  freelancerId String
+  amount       Decimal
+  status       String            @default("ACTIVE")
+  createdAt    DateTime          @default(now())
+  freelancer   FreelancerProfile @relation(fields: [freelancerId], references: [id])
+  startup      StartupProfile    @relation(fields: [startupId], references: [id])
+  task         Task              @relation(fields: [taskId], references: [id])
+  milestones   Milestone[]
+}
+
+model Milestone {
+  id         String   @id @default(cuid())
+  contractId String
+  title      String
+  amount     Decimal
+  status     String   @default("PENDING")
+  contract   Contract @relation(fields: [contractId], references: [id])
+}
+
+model ProviderProfile {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  companyName  String?
+  description  String?
+  isActive     Boolean       @default(false)
+  providerType ProviderType?
+  capacity     Int?
+  minPrice     Int?
+  maxPrice     Int?
+  priceUnit    String?
+  latitude     Float?
+  longitude    Float?
+  city         String?
+  state        String?
+  country      String?
+  pincode      String?
+  address      String?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaces       Space[]
+
+  @@index([latitude, longitude])
+}
+
+model Space {
+  id           String          @id @default(cuid())
+  providerId   String
+  name         String
+  description  String
+  address      String
+  pricePerHour Decimal
+  capacity     Int             @default(1)
+  amenities    String[]
+  createdAt    DateTime        @default(now())
+  provider     ProviderProfile @relation(fields: [providerId], references: [id])
+  bookings     SpaceBooking[]
+  images       SpaceImage[]
+}
+
+model SpaceImage {
+  id      String @id @default(cuid())
+  spaceId String
+  url     String
+  space   Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+}
+
+model SpaceBooking {
+  id         String   @id @default(cuid())
+  spaceId    String
+  userId     String
+  startTime  DateTime
+  endTime    DateTime
+  status     String   @default("PENDING")
+  totalPrice Decimal
+  createdAt  DateTime @default(now())
+  space      Space    @relation(fields: [spaceId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model InvestorProfile {
+  id                  String                @id @default(cuid())
+  userId              String                @unique
+  firmName            String?
+  thesisNote          String?
+  isActive            Boolean               @default(false)
+  investorType        InvestorType?
+  minTicketSize       Int?
+  maxTicketSize       Int?
+  sectors             String[]
+  stages              StartupStage[]
+  isPublic            Boolean               @default(false)
+  latitude            Float?
+  longitude           Float?
+  city                String?
+  state               String?
+  country             String?
+  pincode             String?
+  address             String?
+  investments         Investment[]
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MatchRecommendation MatchRecommendation[]
+
+  @@index([latitude, longitude])
+}
+
+model StartupProfile {
+  id                  String                @id @default(cuid())
+  ownerId             String                @unique
+  isActive            Boolean               @default(false)
+  name                String
+  pitchDeck           String?
+  valuation           Decimal?
+  stage               StartupStage?
+  industry            String?
+  oneLiner            String?
+  description         String?
+  website             String?
+  teamSize            String?
+  fundingRound        FundingRound?
+  fundingNeeded       Boolean               @default(false)
+  minHiringBudget     Int?
+  maxHiringBudget     Int?
+  latitude            Float?
+  longitude           Float?
+  city                String?
+  state               String?
+  country             String?
+  pincode             String?
+  address             String?
+  contracts           Contract[]
+  investments         Investment[]
+  MatchRecommendation MatchRecommendation[]
+  aiInsight           StartupAIInsight?
+  owner               User                  @relation(fields: [ownerId], references: [id])
+  tasks               Task[]
+
+  @@index([latitude, longitude])
+}
+
+model StartupAIInsight {
+  id                 String         @id @default(cuid())
+  startupId          String         @unique
+  summary            String
+  strengths          Json
+  gaps               Json
+  recommendedRoles   Json
+  suggestedNextSteps Json
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  startup            StartupProfile @relation(fields: [startupId], references: [id])
+}
+
+model Task {
+  id          String         @id @default(cuid())
+  startupId   String
+  title       String
+  description String
+  budget      Decimal?
+  duration    String?
+  category    String?
+  status      String         @default("OPEN")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  contracts   Contract[]
+  proposals   Proposal[]
+  startup     StartupProfile @relation(fields: [startupId], references: [id])
+}
+
+model Proposal {
+  id           String            @id @default(cuid())
+  taskId       String
+  freelancerId String
+  amount       Decimal
+  coverLetter  String
+  status       String            @default("PENDING")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  freelancer   FreelancerProfile @relation(fields: [freelancerId], references: [id])
+  task         Task              @relation(fields: [taskId], references: [id])
+}
+
+model Investment {
+  id         String          @id @default(cuid())
+  investorId String
+  startupId  String
+  amount     Decimal
+  equity     Decimal?
+  status     String          @default("OFFERED")
+  createdAt  DateTime        @default(now())
+  investor   InvestorProfile @relation(fields: [investorId], references: [id])
+  startup    StartupProfile  @relation(fields: [startupId], references: [id])
+}
+
+model Wallet {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  balance      Decimal       @default(0)
+  currency     String        @default("USD")
+  payouts      Payout[]
+  transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  walletId  String
+  amount    Decimal
+  type      String
+  reference String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+}
+
+model Payout {
+  id        String   @id @default(cuid())
+  walletId  String
+  amount    Decimal
+  method    String
+  status    String   @default("PROCESSING")
+  createdAt DateTime @default(now())
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  type      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String
+  details   String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model SupportRequest {
+  id        String        @id @default(cuid())
+  userId    String
+  role      UserRole
+  subject   String
+  message   String
+  status    SupportStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  userId    String?
+  User      User?     @relation(fields: [userId], references: [id])
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Property {
+  id             String             @id @default(cuid())
+  ownerId        String
+  title          String
+  slug           String             @unique
+  description    String?
+  category       String
+  purposeTags    String[]           @default([])
+  sizeSqFt       Int?
+  priceMonthly   Int?
+  priceYearly    Int?
+  minLeaseMonths Int?
+  depositAmount  Int?
+  latitude       Float?
+  longitude      Float?
+  city           String?
+  state          String?
+  country        String?
+  pincode        String?
+  address        String?
+  amenities      String[]           @default([])
+  powerRating    String?
+  internet       String?
+  parkingSpots   Int?
+  images         String[]           @default([])
+  status         String             @default("AVAILABLE")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  inquiries      Inquiry[]
+  owner          User               @relation("OwnerProperties", fields: [ownerId], references: [id])
+  contracts      PropertyContract[]
+  reviews        Review[]
+  visits         Visit[]
+}
+
+model HelpRequest {
+  id            String         @id @default(cuid())
+  userId        String
+  category      String
+  description   String
+  latitude      Float
+  longitude     Float
+  expiresAt     DateTime
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  radiusKm      Int            @default(5)
+  responseCount Int            @default(0)
+  type          RequestType    @default(NEED)
+  status        HelpStatus     @default(ACTIVE)
+  voiceUrl      String?
+  user          User           @relation(fields: [userId], references: [id])
+  responses     HelpResponse[]
+
+  @@index([latitude, longitude])
+  @@index([expiresAt])
+  @@index([type, status, expiresAt])
+}
+
+model Inquiry {
+  id             String   @id @default(cuid())
+  propertyId     String
+  startupId      String
+  ideaSummary    String?
+  requiredSize   Int?
+  teamSize       Int?
+  durationMonths Int?
+  budget         Int?
+  status         String   @default("PENDING")
+  message        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  property       Property @relation(fields: [propertyId], references: [id])
+  startup        User     @relation("StartupInquiries", fields: [startupId], references: [id])
+}
+
+model Visit {
+  id          String   @id @default(cuid())
+  propertyId  String
+  requesterId String
+  scheduledAt DateTime
+  status      String   @default("PENDING")
+  notes       String?
+  createdAt   DateTime @default(now())
+  property    Property @relation(fields: [propertyId], references: [id])
+}
+
+model PropertyContract {
+  id          String   @id @default(cuid())
+  propertyId  String
+  startupId   String
+  providerId  String
+  leaseMonths Int
+  monthlyRate Int
+  deposit     Int
+  status      String   @default("PENDING")
+  terms       String?
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  property    Property @relation(fields: [propertyId], references: [id])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  propertyId String
+  authorId   String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model MatchRecommendation {
+  id           String             @id @default(cuid())
+  startupId    String
+  freelancerId String?
+  investorId   String?
+  matchScore   Int
+  reason       String?
+  createdAt    DateTime           @default(now())
+  expiresAt    DateTime
+  version      Int                @default(1)
+  freelancer   FreelancerProfile? @relation(fields: [freelancerId], references: [id])
+  investor     InvestorProfile?   @relation(fields: [investorId], references: [id])
+  startup      StartupProfile     @relation(fields: [startupId], references: [id])
+
+  @@unique([startupId, freelancerId])
+  @@unique([startupId, investorId])
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  inviterId String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  inviter   User     @relation("InvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+}
+
+model HelpResponse {
+  id            String      @id @default(cuid())
+  helpRequestId String
+  helperId      String
+  status        String      @default("PENDING")
+  message       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  helpRequest   HelpRequest @relation(fields: [helpRequestId], references: [id])
+  helper        User        @relation(fields: [helperId], references: [id])
+
+  @@unique([helpRequestId, helperId])
+}
+
+enum UserRole {
+  ADMIN
+  FREELANCER
+  INVESTOR
+  PROVIDER
+  STARTUP
+}
+
+enum ExperienceLevel {
+  JUNIOR
+  MID
+  SENIOR
+  EXPERT
+}
+
+enum AvailabilityType {
+  FULL_TIME
+  PART_TIME
+  HOURLY
+}
+
+enum WorkType {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum StartupStage {
+  IDEA
+  MVP
+  GROWTH
+  SCALE
+}
+
+enum FundingRound {
+  BOOTSTRAPPED
+  PRE_SEED
+  SEED
+  SERIES_A
+  SERIES_B_PLUS
+}
+
+enum InvestorType {
+  ANGEL
+  VC
+  SYNDICATE
+  ACCELERATOR
+}
+
+enum ProviderType {
+  COWORKING
+  PRIVATE_OFFICE
+  CAFE
+  GYM
+  RETAIL
+  INDUSTRIAL
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum RequestType {
+  NEED
+  OFFER
+}
+
+enum HelpStatus {
+  ACTIVE
+  RESOLVED
+  EXPIRED
+}
